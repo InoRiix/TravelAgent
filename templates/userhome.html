@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的旅行计划 - 旅行助手</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .section {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        .form-group textarea {
+            height: 150px;
+            resize: vertical;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .plans-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .plan-item {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .plan-item:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .plan-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .plan-preview {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            line-clamp: 2;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .plan-details {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+        .plan-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 15px;
+        }
+        .delete-btn {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .delete-btn:hover {
+            background: #ff5252;
+        }
+        .detail-view {
+            display: none;
+        }
+        .preview-view {
+            display: block;
+        }
+        .back-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        .back-btn:hover {
+            background: #5a6fd8;
+        }
+        .status-message {
+            padding: 12px;
+            border-radius: 6px;
+            margin: 15px 0;
+            text-align: center;
+            display: none;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>旅行助手</h1>
+        <div class="user-info">
+            <span id="userEmail">用户邮箱</span>
+            <button class="logout-btn" onclick="signOut()">退出登录</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="section">
+                <h2 class="section-title">添加新计划</h2>
+                <form id="planForm">
+                    <div class="form-group">
+                        <label for="planText">旅行计划:</label>
+                        <textarea id="planText" placeholder="请输入您的旅行计划详情..." required></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn">添加计划</button>
+                        <button type="button" class="btn" id="askAIButton" style="margin-left: 10px;">问问AI</button>
+                    </div>
+                </form>
+                <div id="planStatus" class="status-message"></div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">我的旅行计划</h2>
+                <div id="plansList" class="plans-list">
+                    <!-- 计划列表将在这里动态生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwYO3TzKAD85Uwn8fb3zVcYGcqqBH6SiI",
+            authDomain: "travel-agent-211b1.firebaseapp.com",
+            projectId: "travel-agent-211b1",
+            storageBucket: "travel-agent-211b1.firebasestorage.app",
+            messagingSenderId: "495797652963",
+            appId: "1:495797652963:web:8f6582d72c1c29bfc924d6",
+            measurementId: "G-L8BHHHE75C"
+        };
+
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // DOM元素
+        const userEmail = document.getElementById('userEmail');
+        const planForm = document.getElementById('planForm');
+        const plansList = document.getElementById('plansList');
+        const planStatus = document.getElementById('planStatus');
+
+        // 页面加载时检查用户登录状态
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                userEmail.textContent = user.email;
+                loadPlans(user.uid);
+            } else {
+                // 用户未登录，重定向到登录页面
+                window.location.href = '/';
+            }
+        });
+
+        // 登出功能
+        function signOut() {
+            auth.signOut().then(() => {
+                window.location.href = '/';
+            });
+        }
+
+        // 加载用户的旅行计划
+        async function loadPlans(userId) {
+            try {
+                const snapshot = await db.collection('travel_plans')
+                    .where('userId', '==', userId)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                plansList.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    plansList.innerHTML = '<p>暂无旅行计划</p>';
+                    return;
+                }
+                
+                snapshot.forEach(doc => {
+                    const plan = doc.data();
+                    const planElement = createPlanElement(doc.id, plan);
+                    plansList.appendChild(planElement);
+                });
+            } catch (error) {
+                // 处理索引错误 - Firebase需要复合索引来进行查询
+                if (error.message.includes("query requires an index")) {
+                    // 先显示空状态，然后尝试不使用排序的查询
+                    plansList.innerHTML = '<p>暂无旅行计划</p>';
+                    
+                    // 尝试不使用排序的查询作为备选方案
+                    try {
+                        const snapshot = await db.collection('travel_plans')
+                            .where('userId', '==', userId)
+                            .get();
+                        
+                        plansList.innerHTML = '';
+                        
+                        if (snapshot.empty) {
+                            plansList.innerHTML = '<p>暂无旅行计划</p>';
+                            return;
+                        }
+                        
+                        // 转换为数组并按创建时间排序
+                        const plans = [];
+                        snapshot.forEach(doc => {
+                            plans.push({ id: doc.id, data: doc.data() });
+                        });
+                        
+                        // 按创建时间排序（如果存在createdAt字段）
+                        plans.sort((a, b) => {
+                            const timeA = a.data.createdAt ? a.data.createdAt.toDate().getTime() : 0;
+                            const timeB = b.data.createdAt ? b.data.createdAt.toDate().getTime() : 0;
+                            return timeB - timeA;
+                        });
+                        
+                        plans.forEach(plan => {
+                            const planElement = createPlanElement(plan.id, plan.data);
+                            plansList.appendChild(planElement);
+                        });
+                    } catch (fallbackError) {
+                        showPlanStatus('加载计划失败: ' + fallbackError.message, false);
+                    }
+                } else {
+                    // 其他错误
+                    showPlanStatus('加载计划失败: ' + error.message, false);
+                }
+            }
+        }
+
+        // 创建计划元素
+        function createPlanElement(id, plan) {
+            const div = document.createElement('div');
+            div.className = 'plan-item';
+            div.dataset.id = id;
+            
+            // 创建预览视图
+            const previewView = document.createElement('div');
+            previewView.className = 'preview-view';
+            
+            // 限制预览文本长度（用于纯文本预览）
+            const previewText = plan.planText.length > 100 ? plan.planText.substring(0, 100) + '...' : plan.planText;
+            
+            previewView.innerHTML = `
+                <div class="plan-preview">${previewText}</div>
+                <button class="delete-btn" onclick="deletePlan('${id}'); event.stopPropagation();">删除</button>
+            `;
+            
+            // 创建详情视图
+            const detailView = document.createElement('div');
+            detailView.className = 'detail-view';
+            detailView.innerHTML = `
+                <button class="back-btn" onclick="showPreviewView(this.parentElement.parentElement); event.stopPropagation();">返回</button>
+                <div class="plan-details">${plan.planText}</div>
+                <button class="delete-btn" onclick="deletePlan('${id}'); event.stopPropagation();">删除</button>
+            `;
+            
+            div.appendChild(previewView);
+            div.appendChild(detailView);
+            
+            // 添加点击事件，切换到详情视图
+            div.addEventListener('click', function() {
+                showDetailView(this);
+            });
+            
+            return div;
+        }
+        
+        // 显示详情视图
+        function showDetailView(planElement) {
+            const previewView = planElement.querySelector('.preview-view');
+            const detailView = planElement.querySelector('.detail-view');
+            
+            previewView.style.display = 'none';
+            detailView.style.display = 'block';
+        }
+        
+        // 显示预览视图
+        function showPreviewView(planElement) {
+            const previewView = planElement.querySelector('.preview-view');
+            const detailView = planElement.querySelector('.detail-view');
+            
+            detailView.style.display = 'none';
+            previewView.style.display = 'block';
+        }
+
+        // 删除旅行计划
+        async function deletePlan(planId) {
+            if (!confirm('确定要删除这个旅行计划吗？')) return;
+            
+            try {
+                const user = auth.currentUser;
+                if (!user) throw new Error('用户未登录');
+                
+                await db.collection('travel_plans').doc(planId).delete();
+                showPlanStatus('计划删除成功', true);
+                loadPlans(user.uid); // 重新加载计划列表
+            } catch (error) {
+                showPlanStatus('删除失败: ' + error.message, false);
+            }
+        }
+
+        // 添加新计划
+        planForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const planText = document.getElementById('planText').value;
+            
+            if (!planText) {
+                showPlanStatus('请输入旅行计划', false);
+                return;
+            }
+            
+            try {
+                const user = auth.currentUser;
+                if (!user) throw new Error('用户未登录');
+                
+                await db.collection('travel_plans').add({
+                    userId: user.uid,
+                    planText: planText,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                showPlanStatus('计划添加成功', true);
+                planForm.reset();
+                loadPlans(user.uid); // 重新加载计划列表
+            } catch (error) {
+                showPlanStatus('添加失败: ' + error.message, false);
+            }
+        });
+
+        // 问问AI按钮点击事件
+        document.getElementById('askAIButton').addEventListener('click', async () => {
+            const planText = document.getElementById('planText').value;
+            
+            if (!planText) {
+                showPlanStatus('请输入旅行计划后再询问AI', false);
+                return;
+            }
+            
+            try {
+                // 调用后端API获取AI生成的计划
+                const response = await fetch('/api/ai/plan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ planText: planText })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('网络响应错误');
+                }
+                
+                const data = await response.json();
+                
+                // 将返回的字符串内容填到输入框中，并覆盖原来的内容
+                document.getElementById('planText').value = data.planText;
+                
+                showPlanStatus('AI生成成功', true);
+            } catch (error) {
+                showPlanStatus('AI生成失败: ' + error.message, false);
+            }
+        });
+
+        // 显示计划状态消息
+        function showPlanStatus(message, isSuccess) {
+            planStatus.textContent = message;
+            planStatus.className = 'status-message ' + (isSuccess ? 'status-success' : 'status-error');
+            planStatus.style.display = 'block';
+            
+            setTimeout(() => {
+                planStatus.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
