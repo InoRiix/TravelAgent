@@ -1,6 +1,10 @@
 from flask import Flask, render_template, jsonify, request
 from openai import OpenAI, api_key
 from dotenv import load_dotenv
+from dashscope.audio.asr import Recognition
+from http import HTTPStatus
+import tempfile
+import requests
 import os
 
 # 加载.env文件中的环境变量
@@ -103,6 +107,131 @@ def create_app():
         return jsonify({
             "planText": ai_plan_text
         })
+    
+    # 语音识别API端点
+    @app.route('/api/audio/transcribe', methods=['POST'])
+    def transcribe_audio():
+        from dashscope.audio.asr import Recognition
+        from http import HTTPStatus
+        import tempfile
+        import os
+        import subprocess
+        
+        # 获取上传的音频文件
+        audio_file = request.files.get('audio')
+        
+        if not audio_file:
+            return jsonify({"error": "没有提供音频文件"}), 400
+        
+        # 保存音频文件到本地（覆盖已有的recording.webm）
+        # 创建uploads目录（如果不存在）
+        upload_dir = os.path.join(os.getcwd(), 'uploads')
+        if not os.path.exists(upload_dir):
+            os.makedirs(upload_dir)
+        
+        # 生成保存路径（始终保存为recording.webm，会覆盖已有的文件）
+        save_path = os.path.join(upload_dir, 'recording.webm')
+        
+        # 保存文件（会自动覆盖已有的文件）
+        audio_file.save(save_path)
+        print(f"音频文件已保存到: {save_path}")
+
+        try:
+            # 使用FFmpeg命令行方式进行转换
+            try:
+                wav_filename = save_path.replace('.webm', '.wav')
+                # 尝试在系统PATH中查找ffmpeg
+                ffmpeg_path = "ffmpeg"
+                try:
+                    subprocess.run([ffmpeg_path, "-version"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except (subprocess.CalledProcessError, FileNotFoundError):
+                    # 如果在PATH中找不到，尝试常见的安装路径
+                    common_paths = [
+                        "C:\\ffmpeg\\bin\\ffmpeg.exe",
+                        "D:\\ffmpeg\\bin\\ffmpeg.exe",
+                        "C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe",
+                        "D:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe",
+                        "C:\\Program Files (x86)\\ffmpeg\\bin\\ffmpeg.exe"
+                    ]
+                    ffmpeg_path = None
+                    for path in common_paths:
+                        if os.path.exists(path):
+                            ffmpeg_path = path
+                            break
+                    
+                    # 如果还是找不到，抛出异常
+                    if ffmpeg_path is None:
+                        raise FileNotFoundError("在常见路径中找不到FFmpeg，请确保已安装FFmpeg并将其添加到系统PATH环境变量中")
+                
+                # 执行FFmpeg转换，捕获详细的错误输出
+                result = subprocess.run([
+                    ffmpeg_path, '-i', save_path, 
+                    '-acodec', 'pcm_s16le',  # PCM 16位编码
+                    '-ar', '16000',           # 16kHz采样率
+                    '-ac', '1',               # 单声道
+                    wav_filename
+                ], capture_output=True, text=True)
+                
+                # 检查转换是否成功
+                if result.returncode != 0:
+                    error_message = f"FFmpeg转换失败: {result.stderr}"
+                    print(error_message)
+                    return jsonify({"error": f"音频格式转换失败: {result.stderr}"}), 500
+                
+                # 使用转换后的wav文件
+                recognition_filename = wav_filename
+                format_type = 'wav'
+            except FileNotFoundError as e:
+                error_message = str(e)
+                print(f"FFmpeg未找到: {error_message}")
+                return jsonify({"error": error_message}), 500
+            except Exception as e:
+                error_message = f"FFmpeg转换过程中发生未知错误: {str(e)}"
+                print(error_message)
+                return jsonify({"error": "音频格式转换过程中发生未知错误"}), 500
+            
+            # 使用阿里云实时语音识别服务处理音频文件
+            recognition = Recognition(
+                model='paraformer-realtime-v2',
+                format=format_type,  # 根据实际文件格式调整
+                sample_rate=16000,
+                language_hints=['zh', 'en'],
+                callback=None
+            )
+            
+            result = recognition.call(recognition_filename)
+            
+            # 删除转换后的wav文件（保留原始webm文件）
+            if os.path.exists(wav_filename):
+                os.unlink(wav_filename)
+            
+            if result.status_code == HTTPStatus.OK:
+                recognized_text = result.get_sentence()
+                
+                # 如果recognized_text是一个列表（包含多个句子），提取所有句子的文本内容
+                if isinstance(recognized_text, list):
+                    # 提取每个句子的text字段并组合成一个完整的句子
+                    combined_text = ""
+                    for sentence in recognized_text:
+                        if isinstance(sentence, dict) and "text" in sentence:
+                            combined_text += sentence["text"]
+                    recognized_text = combined_text
+                
+                return jsonify({
+                    "planText": recognized_text
+                })
+            else:
+                return jsonify({"error": f"语音识别失败: {result.message}"}), 500
+                
+        except Exception as e:
+            # 确保转换后的wav文件被删除
+            if 'wav_filename' in locals() and os.path.exists(wav_filename):
+                try:
+                    os.unlink(wav_filename)
+                except:
+                    pass
+            print(f"语音识别过程中发生错误: {e}")
+            return jsonify({"error": f"语音识别过程中发生错误: {str(e)}"}), 500
     
     return app
 

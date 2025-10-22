@@ -217,6 +217,7 @@
                     <div class="button-group">
                         <button type="submit" class="btn">添加计划</button>
                         <button type="button" class="btn" id="askAIButton" style="margin-left: 10px;">问问AI</button>
+                        <button type="button" class="btn" id="recordButton" style="margin-left: 10px;">录音输入</button>
                     </div>
                 </form>
                 <div id="planStatus" class="status-message"></div>
@@ -446,12 +447,20 @@
 
         // 问问AI按钮点击事件
         document.getElementById('askAIButton').addEventListener('click', async () => {
+            const askAIButton = document.getElementById('askAIButton');
             const planText = document.getElementById('planText').value;
             
             if (!planText) {
                 showPlanStatus('请输入旅行计划后再询问AI', false);
                 return;
             }
+            
+            // 保存原始按钮文字
+            const originalButtonText = askAIButton.textContent;
+            
+            // 设置按钮为等待状态
+            askAIButton.textContent = '等待中';
+            askAIButton.disabled = true;
             
             try {
                 // 调用后端API获取AI生成的计划
@@ -475,6 +484,10 @@
                 showPlanStatus('AI生成成功', true);
             } catch (error) {
                 showPlanStatus('AI生成失败: ' + error.message, false);
+            } finally {
+                // 恢复按钮原始状态
+                askAIButton.textContent = originalButtonText;
+                askAIButton.disabled = false;
             }
         });
 
@@ -488,6 +501,83 @@
                 planStatus.style.display = 'none';
             }, 3000);
         }
+
+        // 录音相关变量
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // 录音按钮点击事件
+        document.getElementById('recordButton').addEventListener('click', async () => {
+            const recordButton = document.getElementById('recordButton');
+            
+            if (!isRecording) {
+                // 开始录音
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.addEventListener('dataavailable', event => {
+                        audioChunks.push(event.data);
+                    });
+                    
+                    mediaRecorder.addEventListener('stop', async () => {
+                        // 创建音频Blob
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        // window.recordedAudioBlob = audioBlob; // 保存为全局变量
+                        
+                        // 设置按钮为识别中状态
+                        recordButton.textContent = '识别中';
+                        recordButton.disabled = true;
+                        
+                        try {
+                            // 创建FormData对象发送音频文件
+                            const formData = new FormData();
+                            formData.append('audio', audioBlob, 'recording.webm');
+                            
+                            // 发送到后端进行语音识别
+                            const response = await fetch('/api/audio/transcribe', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error('网络响应错误');
+                            }
+                            
+                            const data = await response.json();
+                            
+                            // 将返回的字符串内容填到输入框中，并覆盖原来的内容
+                            document.getElementById('planText').value = data.planText;
+                            
+                            showPlanStatus('语音识别成功', true);
+                        } catch (error) {
+                            showPlanStatus('语音识别失败: ' + error.message, false);
+                        } finally {
+                            // 恢复按钮原始状态
+                            recordButton.textContent = '录音输入';
+                            recordButton.disabled = false;
+                        }
+                    });
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    
+                    // 更新按钮状态
+                    recordButton.textContent = '正在录音';
+                } catch (error) {
+                    showPlanStatus('无法访问麦克风: ' + error.message, false);
+                }
+            } else {
+                // 停止录音
+                mediaRecorder.stop();
+                isRecording = false;
+                
+                // 停止所有音频流
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+        });
     </script>
 </body>
 </html>

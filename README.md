@@ -45,6 +45,38 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### 安装FFmpeg
+本项目需要FFmpeg来处理音频文件格式转换，请根据您的操作系统安装FFmpeg：
+
+**Windows:**
+1. 访问FFmpeg官网 https://ffmpeg.org/download.html
+2. 下载Windows版本的预编译包
+3. 解压到目录如 C:\ffmpeg
+4. 将 C:\ffmpeg\bin 添加到系统环境变量PATH中
+5. 或者直接将ffmpeg.exe放在项目根目录下
+
+**macOS (使用Homebrew):**
+```bash
+brew install ffmpeg
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
+**CentOS/RHEL:**
+```bash
+sudo yum install epel-release
+sudo yum install ffmpeg
+```
+
+验证安装：
+```bash
+ffmpeg -version
+```
+
 ### 配置环境变量
 复制 `.env.example` 文件为 `.env` 并填写相应配置：
 ```bash
