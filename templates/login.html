@@ -167,15 +167,15 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <script>
-        // Firebase配置
+        // Firebase配置（从环境变量获取）
         const firebaseConfig = {
-            apiKey: "AIzaSyBwYO3TzKAD85Uwn8fb3zVcYGcqqBH6SiI",
-            authDomain: "travel-agent-211b1.firebaseapp.com",
-            projectId: "travel-agent-211b1",
-            storageBucket: "travel-agent-211b1.firebasestorage.app",
-            messagingSenderId: "495797652963",
-            appId: "1:495797652963:web:8f6582d72c1c29bfc924d6",
-            measurementId: "G-L8BHHHE75C"
+            apiKey: "{{ firebase_config.apiKey }}",
+            authDomain: "{{ firebase_config.authDomain }}",
+            projectId: "{{ firebase_config.projectId }}",
+            storageBucket: "{{ firebase_config.storageBucket }}",
+            messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+            appId: "{{ firebase_config.appId }}",
+            measurementId: "{{ firebase_config.measurementId }}"
         };
         
         // 初始化Firebase

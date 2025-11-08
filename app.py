@@ -16,12 +16,55 @@ def create_app():
     # 基本路由
     @app.route('/')
     def login():
-        return render_template('login.html')
+        # 传递环境变量给前端模板
+        firebase_config = {
+            'apiKey': os.environ.get('FIREBASE_API_KEY', ''),
+            'authDomain': os.environ.get('FIREBASE_AUTH_DOMAIN', ''),
+            'projectId': os.environ.get('FIREBASE_PROJECT_ID', ''),
+            'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', ''),
+            'messagingSenderId': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', ''),
+            'appId': os.environ.get('FIREBASE_APP_ID', ''),
+            'measurementId': os.environ.get('FIREBASE_MEASUREMENT_ID', '')
+        }
+        return render_template('login.html', firebase_config=firebase_config)
     
-        # 用户主页路由
+    # 用户主页路由
     @app.route('/userhome')
     def userhome():
-        return render_template('userhome.html')
+        # 传递环境变量给前端模板
+        firebase_config = {
+            'apiKey': os.environ.get('FIREBASE_API_KEY', ''),
+            'authDomain': os.environ.get('FIREBASE_AUTH_DOMAIN', ''),
+            'projectId': os.environ.get('FIREBASE_PROJECT_ID', ''),
+            'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', ''),
+            'messagingSenderId': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', ''),
+            'appId': os.environ.get('FIREBASE_APP_ID', ''),
+            'measurementId': os.environ.get('FIREBASE_MEASUREMENT_ID', '')
+        }
+        amap_config = {
+            'security_code': os.environ.get('AMAP_SECURITY_CODE', ''),
+            'web_api_key': os.environ.get('AMAP_WEB_API_KEY', '')
+        }
+        return render_template('userhome.html', firebase_config=firebase_config, amap_config=amap_config)
+    
+    # 导航页面路由
+    @app.route('/navigation')
+    def navigation():
+        # 传递环境变量给前端模板
+        firebase_config = {
+            'apiKey': os.environ.get('FIREBASE_API_KEY', ''),
+            'authDomain': os.environ.get('FIREBASE_AUTH_DOMAIN', ''),
+            'projectId': os.environ.get('FIREBASE_PROJECT_ID', ''),
+            'storageBucket': os.environ.get('FIREBASE_STORAGE_BUCKET', ''),
+            'messagingSenderId': os.environ.get('FIREBASE_MESSAGING_SENDER_ID', ''),
+            'appId': os.environ.get('FIREBASE_APP_ID', ''),
+            'measurementId': os.environ.get('FIREBASE_MEASUREMENT_ID', '')
+        }
+        amap_config = {
+            'security_code': os.environ.get('AMAP_SECURITY_CODE', ''),
+            'web_api_key': os.environ.get('AMAP_WEB_API_KEY', '')
+        }
+        return render_template('navigation.html', firebase_config=firebase_config, amap_config=amap_config)
     
     # 健康检查端点
     @app.route('/health')

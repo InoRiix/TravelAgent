@@ -218,6 +218,7 @@
                         <button type="submit" class="btn">添加计划</button>
                         <button type="button" class="btn" id="askAIButton" style="margin-left: 10px;">问问AI</button>
                         <button type="button" class="btn" id="recordButton" style="margin-left: 10px;">录音输入</button>
+                        <button type="button" class="btn" id="navigateButton" style="margin-left: 10px;">搜索路线</button>
                     </div>
                 </form>
                 <div id="planStatus" class="status-message"></div>
@@ -238,16 +239,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 
     <script>
-        // Firebase配置
-        const firebaseConfig = {
-            apiKey: "AIzaSyBwYO3TzKAD85Uwn8fb3zVcYGcqqBH6SiI",
-            authDomain: "travel-agent-211b1.firebaseapp.com",
-            projectId: "travel-agent-211b1",
-            storageBucket: "travel-agent-211b1.firebasestorage.app",
-            messagingSenderId: "495797652963",
-            appId: "1:495797652963:web:8f6582d72c1c29bfc924d6",
-            measurementId: "G-L8BHHHE75C"
-        };
+        // Firebase配置（从环境变量获取）
+    const firebaseConfig = {
+        apiKey: "{{ firebase_config.apiKey }}",
+        authDomain: "{{ firebase_config.authDomain }}",
+        projectId: "{{ firebase_config.projectId }}",
+        storageBucket: "{{ firebase_config.storageBucket }}",
+        messagingSenderId: "{{ firebase_config.messagingSenderId }}",
+        appId: "{{ firebase_config.appId }}",
+        measurementId: "{{ firebase_config.measurementId }}"
+    };
 
         // 初始化Firebase
         firebase.initializeApp(firebaseConfig);
@@ -577,6 +578,11 @@
                 // 停止所有音频流
                 mediaRecorder.stream.getTracks().forEach(track => track.stop());
             }
+        });
+                
+        // 搜索路线按钮点击事件
+        document.getElementById('navigateButton').addEventListener('click', () => {
+            window.location.href = '/navigation';
         });
     </script>
 </body>

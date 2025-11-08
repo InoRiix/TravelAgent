@@ -9,6 +9,7 @@ AI Travel Agent Web Application
 2. 费用预算与管理: AI进行预算分析，记录旅行开销
 3. 用户管理与数据存储: 用户注册登录系统，保存和管理多份旅行计划
 4. 云端行程同步: 旅行计划、费用记录等数据云端同步
+5. 导航功能: 集成高德地图API，提供实时导航服务
 
 ## 技术栈
 ### 后端
@@ -84,7 +85,22 @@ cp .env.example .env
 ```
 
 在 `.env` 文件中配置以下环境变量：
+
+#### 阿里云百炼平台API Key
 - `DASHSCOPE_API_KEY`: 阿里云百炼平台API Key
+
+#### Firebase配置
+- `FIREBASE_API_KEY`: Firebase项目的API密钥
+- `FIREBASE_AUTH_DOMAIN`: Firebase认证域名
+- `FIREBASE_PROJECT_ID`: Firebase项目ID
+- `FIREBASE_STORAGE_BUCKET`: Firebase存储桶
+- `FIREBASE_MESSAGING_SENDER_ID`: Firebase消息发送者ID
+- `FIREBASE_APP_ID`: Firebase应用ID
+- `FIREBASE_MEASUREMENT_ID`: Firebase测量ID
+
+#### 高德地图API配置
+- `AMAP_SECURITY_CODE`: 高德地图安全密钥
+- `AMAP_WEB_API_KEY`: 高德地图Web服务API密钥
 
 ### 运行应用
 ```bash
@@ -110,10 +126,13 @@ python app.py
 ```
 TravelAgent/
 ├── app.py              # Flask应用主文件
+├── start_app.py        # 应用启动脚本
 ├── requirements.txt    # 项目依赖
 ├── run.bat             # Windows启动脚本
 ├── README.md           # 项目说明文档
 ├── templates/          # HTML模板文件
-│   └── login.html      # 登录页面
+│   ├── login.html      # 登录页面
+│   ├── userhome.html   # 用户主页
+│   └── navigation.html # 导航页面
 └── venv/               # Python虚拟环境 (需要自己创建)
 ```
